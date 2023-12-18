@@ -15,4 +15,3 @@ def check_password(original_password, hashed_password):
     original_password = original_password + Config.PASSWORD_SALT
     check = pbkdf2_sha256.verify(original_password, hashed_password)
     return check
-
