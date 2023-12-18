@@ -7,46 +7,75 @@ from mysql.connector import Error
 
 class ChineseResource(Resource) :
 
+    def post(self) :
+        
+        data = request.get_json()
 
- def post(self) :
+        # 네이버의 파파고 API를 호출하여
+        # 결과를 가져온다.
 
-    data = request.get_json()
+        # 파파고 API의 문서를 보고,
+        # 어떤 데이터를 보내야 하는지 파악하여
+        # reuests 의 get, post, put, delete 등의
+        # 함수를 이용하여 호출하면 된다. 
 
-    # 네이버의 파파고 api를 호출하여
-    # 결과를 가져온다.
+        req_data = {
+                        "source": "ko",
+                        "target": "zh-CN",
+                        "text": data['sentence']
+                    }
+        
+        req_header = { "X-Naver-Client-Id" : "n64niiFQ0YTRVh3VxBrT",
+                      "X-Naver-Client-Secret" : "YL9MNWR2Vt"}
 
-    # 파파고 api의 문서를 보고,
-    # 어떤 데이터를 보내야 하는지 파악하여
-    # requests의 get, post, put, delete 등의
-    # 함수를 이용하여 호출하면 된다.
+        response = requests.post("https://openapi.naver.com/v1/papago/n2mt",  
+                      req_data, 
+                      headers= req_header )
+        
+        # 데이터를 파파고 서버로 부터 받아왔으니,
+        # 우리가 필요한 데이터만 뽑아내면 된다.
+
+        print(response)
+
+        # 원하는 데이터를 뽑기 위해서는
+        # json 으로 먼저 만들어 놔야 한다.
+        response = response.json()
+
+        print()
+        print(response)
+
+        chinese = response["message"]["result"]["translatedText"]
+
+        return {"result" : "success" ,
+                "chinese" : chinese}, 200
 
 
-    req_data = {
-                "source" : "KO",
-                "target" : "zh-CN",
-                "text" : data['sentence']
-                }
-    
-    req_header = {"X-Naver-Client-Id" : "kloxtRaPdGtG7Rdq9o0B",
-                  "X-Naver-Client-Secret" : "GxLE2V46jk"}
+class NewsResource(Resource) :
 
-    response = requests.post('https://openapi.naver.com/v1/papago/n2mt',
-                  req_data,
-                  headers= req_header )
-    
-    # 데이터를 파파고 서버로 부터 받아왔으니,
-    # 우리가 필요한 데이터만 뽑아내면 된다.
+    def get(self) :
 
-    print(response)
-    
-    # 원하는 데이터를 뽑기 위해서는
-    # json 으로 먼저 만들어 놔야 한다.
-    response = response.json()
-    
-    print()
-    print(response)
+        query = request.args.get('query')
 
-    chinese = response["message"]["result"]["tra"]
+        # 네이버 뉴스 검색 API를 호출 
 
-    return {"result" : "success" ,
-            "chinese" : chinese }, 200
+        query_string = {'query' : query,
+                        'display' : 30,
+                        'sort' : 'date'}
+        
+        req_header = { "X-Naver-Client-Id" : "kloxtRaPdGtG7Rdq9o0B",
+                      "X-Naver-Client-Secret" : "GxLE2V46jk"}
+
+
+        response = requests.get("https://openapi.naver.com/v1/search/news.json",
+                     query_string, 
+                     headers= req_header)
+        
+        # 리스판스는 json 으로 해줘야 한다.
+        response = response.json()
+
+        return {'result' : 'success', 
+                'items' : response['items'],
+                'count' : len(response['items']) },200
+
+
+
